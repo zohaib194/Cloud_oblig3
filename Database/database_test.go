@@ -1,7 +1,10 @@
-package main
+package database
 
-import "testing"
-import "gopkg.in/mgo.v2"
+import (
+	"testing"
+
+	"gopkg.in/mgo.v2"
+)
 
 func setupDB(t *testing.T) *WebhookMongoDB {
 	db := WebhookMongoDB{

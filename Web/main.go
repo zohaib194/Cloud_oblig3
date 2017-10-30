@@ -9,7 +9,8 @@ import (
 	"strings"
 	"time"
 
-	clock "github.com/zohaib194/oblig2/Clock"
+	types "github.com/zohaib194/oblig2"
+	//	clock "github.com/zohaib194/oblig2/Clock"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -19,7 +20,7 @@ func validateCurrency(c string) bool {
 	if err != nil {
 		fmt.Printf("Error occured! %s", err.Error())
 	}
-	var f clock.Fixer
+	var f types.Fixer
 	err = json.Unmarshal(body, &f)
 
 	for key, _ := range f.Rates {
