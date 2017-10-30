@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	types "github.com/zohaib194/oblig2"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -24,21 +25,20 @@ func (db *WebhookMongoDB) Init() {
 	}
 	defer session.Close()
 
-	//TODO put extra constraints on the webhook collection
 
 }
 
 /*
 Add adds new Subscriber to the storage.
 */
-func (db *WebhookMongoDB) Add(p Subscriber) (string, bool) {
+func (db *WebhookMongoDB) Add(p types.Subscriber) (string, bool) {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
 	defer session.Close()
 
-	var id Id
+	var id types.Id
 	err = session.DB(db.DatabaseName).C(db.Collection).Insert(p)
 	session.DB(db.DatabaseName).C(db.Collection).Find(bson.M{"webhookurl": p.WebhookURL}).One(&id)
 	l := id.ID.Hex()
@@ -54,16 +54,16 @@ func (db *WebhookMongoDB) Add(p Subscriber) (string, bool) {
 /*
 Get the unique id of a given webhook from the storage.
 */
-func (db *WebhookMongoDB) Get(keyId string) (Subscriber, bool) {
+func (db *WebhookMongoDB) Get(keyID string) (types.Subscriber, bool) {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
 	defer session.Close()
-	tempP := Subscriber{}
+	tempP := types.Subscriber{}
 
 	//check the query
-	id := bson.ObjectIdHex(keyId)
+	id := bson.ObjectIdHex(keyID)
 	err = session.DB(db.DatabaseName).C(db.Collection).Find(bson.M{"_id": id}).One(&tempP)
 
 	if err != nil {
@@ -73,14 +73,14 @@ func (db *WebhookMongoDB) Get(keyId string) (Subscriber, bool) {
 	return tempP, true
 }
 
-func (db *WebhookMongoDB) Delete(keyId string) bool {
+func (db *WebhookMongoDB) Delete(keyID string) bool {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
 	defer session.Close()
 
-	id := bson.ObjectIdHex(keyId)
+	id := bson.ObjectIdHex(keyID)
 	err = session.DB(db.DatabaseName).C(db.Collection).Remove(bson.M{"_id": id})
 
 	if err != nil {

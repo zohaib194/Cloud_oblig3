@@ -2,6 +2,13 @@ package types
 
 import "gopkg.in/mgo.v2/bson"
 
+// Webhook mongodb stores the details of the DB connection.
+type WebhookMongoDB struct {
+	DatabaseURL  string
+	DatabaseName string
+	Collection   string
+}
+
 type Subscriber struct {
 	//ID              bson.ObjectId `json:"_id, omitempty" bson:"_id"`
 	WebhookURL      string  `json:"webhookurl" bson:"webhookurl"`
@@ -30,4 +37,9 @@ type Fixer struct {
 type Latest struct {
 	BaseCurrency   string `json:"basecurrency"`
 	TargetCurrency string `json:"targetcurrency"`
+}
+
+// SlackPayload (This payload is used if a webhook is from Slack)
+type SlackPayload struct {
+	Text string `json:"text"`
 }

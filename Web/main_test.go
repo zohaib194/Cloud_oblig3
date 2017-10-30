@@ -11,19 +11,22 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	types "github.com/zohaib194/oblig2"
+	database "github.com/zohaib194/oblig2/Database"
 )
 
 var id string
 
 func Test_postReqHandler(t *testing.T) {
-	db := WebhookMongoDB{
+	db := database.WebhookMongoDB{
 		DatabaseURL:  "mongodb://localhost",
 		DatabaseName: "Webhook",
 		Collection:   "WebhookPayload",
 	}
 
 	count := db.Count()
-	sub := Subscriber{
+	sub := types.Subscriber{
 		"https://hooks.slack.com/services/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",
 		"EUR",
 		"NOK",
@@ -80,7 +83,7 @@ func Test_postReqHandler(t *testing.T) {
 }
 
 func Test_registerWebhook(t *testing.T) {
-	db := WebhookMongoDB{
+	db := database.WebhookMongoDB{
 		DatabaseURL:  "mongodb://localhost",
 		DatabaseName: "Webhook",
 		Collection:   "WebhookPayload",
@@ -117,7 +120,7 @@ func Test_registerWebhook(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error during ioutil %v", err.Error())
 	}
-	var result Subscriber
+	var result types.Subscriber
 
 	err = json.Unmarshal(bytes, &result)
 
@@ -152,7 +155,7 @@ func Test_registerWebhook(t *testing.T) {
 
 func Test_retriveLatest(t *testing.T) {
 
-	l := Latest{
+	l := types.Latest{
 		"EUR",
 		"NOK",
 	}

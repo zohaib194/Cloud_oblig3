@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	types "github.com/zohaib194/oblig2"
+	database "github.com/zohaib194/oblig2/Database"
 	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type SlackPayload struct {
@@ -23,14 +27,14 @@ get the current rate according to a certain payloads base currency and target cu
 and send a notification if current rate trigger min or max value of the payload
 */
 func InvokeWebhook() {
-	db := WebhookMongoDB{
+	db := database.WebhookMongoDB{
 		DatabaseURL:  "mongodb://localhost",
 		DatabaseName: "Webhook",
 		Collection:   "WebhookPayload",
 	}
 
-	var form Invoked
-	var results []Subscriber
+	var form types.Invoked
+	var results []types.Subscriber
 
 	//Connection to the database
 	session, err := mgo.Dial(db.DatabaseURL)
@@ -117,15 +121,127 @@ func InvokeWebhook() {
 	}
 }
 
-func main() {
-	ticker := time.NewTicker(time.Second * 120)
-	go func() {
-		for t := range ticker.C {
-			//call functions
-			fmt.Printf("\n", t)
-			InvokeWebhook()
-			//GetFixerSevenDays(time.Now().AddDate(0, 0, -7), time.Now())
+/*
+	Take the first Fixer payload from the collections
+*/
+func GetFixerSevenDays(sd time.Time, ed time.Time) {
+	db := database.WebhookMongoDB{
+		DatabaseURL:  "mongodb://localhost",
+		DatabaseName: "Webhook",
+		Collection:   "FixerPayload",
+	}
+
+	//Connection to the database
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+	var fixer *types.Fixer
+	for ; sd.Unix() <= ed.Unix(); sd = sd.AddDate(0, 0, +1) {
+
+		URL := "http://api.fixer.io/" + sd.Format("2006-01-02")
+		//fmt.Print(URL + "\n")
+		res, err := http.Get(URL)
+		if err != nil {
+			panic(err) //TODO
 		}
-	}()
-	ticker.Stop()
+
+		body, err := ioutil.ReadAll(res.Body)
+		res.Body.Close()
+		if err != nil {
+			panic(err)
+		}
+
+		err = json.Unmarshal(body, &fixer)
+		if err != nil {
+			panic(err)
+		}
+		//fmt.Print(fixer)
+		fixer.Date = sd.Format("2006-01-02")
+		ok := SaveFixer(fixer)
+		if !ok {
+			fmt.Print("Error occured during saving the data in database")
+		}
+	}
+}
+
+func LatestFixer() {
+	//Send request to Fixer.io
+	fixerURL := "http://api.fixer.io/latest?base=EUR"
+	f, ok := GetFixer(fixerURL)
+	if !ok {
+		fmt.Print("latestFixer()")
+	}
+	f.Date = time.Now().Format("2006-01-02")
+	SaveFixer(f)
+}
+
+/*
+	Get the json from Fixer.io
+*/
+func GetFixer(url string) (*types.Fixer, bool) {
+	var f *types.Fixer
+
+	res, err := http.Get(url)
+	if err != nil {
+		fmt.Printf(err.Error(), http.StatusBadRequest)
+		return f, false
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		fmt.Printf(err.Error(), http.StatusNotFound)
+		return f, false
+	}
+	err = json.Unmarshal(body, &f)
+	if err != nil {
+		fmt.Printf(err.Error(), http.StatusBadRequest)
+		return f, false
+	}
+	return f, true
+}
+
+/*
+	Save Fixer payload in the collection
+*/
+func SaveFixer(f *types.Fixer) bool {
+	db := database.WebhookMongoDB{
+		DatabaseURL:  "mongodb://localhost",
+		DatabaseName: "Webhook",
+		Collection:   "FixerPayload",
+	}
+
+	var found types.Fixer
+	session, err := mgo.Dial(db.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+	err = session.DB(db.DatabaseName).C(db.Collection).Find(bson.M{"date": f.Date}).One(&found)
+	if err != nil && err.Error() != "not found" {
+		fmt.Printf("error finding existing doc in DB, %v", err.Error())
+		return false
+	} else if err != nil && err.Error() == "not found" {
+		err2 := session.DB(db.DatabaseName).C(db.Collection).Insert(&f)
+		if err2 != nil {
+			fmt.Printf("error in SaveFixer(), %v", err2.Error())
+			return false
+		}
+	} else {
+		fmt.Print("Latest Fixer already exist in DB")
+		return true
+	}
+
+	return true
+}
+
+func main() {
+	for range time.NewTicker(30 * time.Second).C {
+		//call functions
+		LatestFixer()
+		InvokeWebhook()
+	}
 }

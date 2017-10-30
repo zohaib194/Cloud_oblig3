@@ -3,6 +3,7 @@ package database
 import (
 	"testing"
 
+	types "github.com/zohaib194/oblig2"
 	"gopkg.in/mgo.v2"
 )
 
@@ -42,7 +43,7 @@ func TestPayloadMongoDB_Add(t *testing.T) {
 	if db.Count() != 0 {
 		t.Error("Database not properly initialized, Subsrcribe count should be 0")
 	}
-	subs := Subscriber{
+	subs := types.Subscriber{
 		WebhookURL:      "http://remoteUrl:8080/randomWebhookPath",
 		BaseCurrency:    "EUR",
 		TargetCurrency:  "NOK",
@@ -64,7 +65,7 @@ func TestPayloadMongoDB_Get(t *testing.T) {
 	if db.Count() != 0 {
 		t.Error("Database not properly initialized, Subscriber count should be 0")
 	}
-	subs := Subscriber{
+	subs := types.Subscriber{
 		WebhookURL:      "http://remoteUrl:8080/randomWebhookPath",
 		BaseCurrency:    "EUR",
 		TargetCurrency:  "NOK",
@@ -104,7 +105,7 @@ func TestPayloadMongoDB_Delete(t *testing.T) {
 	if db.Count() != 0 {
 		t.Error("Database not properly initialized, Subscriber count should be 0")
 	}
-	subs := Subscriber{
+	subs := types.Subscriber{
 		WebhookURL:      "http://remoteUrl:8080/randomWebhookPath",
 		BaseCurrency:    "EUR",
 		TargetCurrency:  "NOK",
