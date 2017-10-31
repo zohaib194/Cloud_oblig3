@@ -194,9 +194,9 @@ func SaveFixer(f *types.Fixer) bool {
 }
 
 func main() {
-	for range time.NewTicker(1 * time.Second).C {
+	for range time.NewTicker(24 * time.Hour).C {
 		//call functions
 		LatestFixer()
-		//InvokeWebhook()
+		InvokeWebhook()
 	}
 }
