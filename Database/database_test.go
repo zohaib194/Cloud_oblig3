@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	types "github.com/zohaib194/oblig2"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 )
 
 func setupDB(t *testing.T) *WebhookMongoDB {
 	db := WebhookMongoDB{
-		DatabaseURL:  "mongodb://localhost",
-		DatabaseName: "testPayload",
-		Collection:   "payload",
+		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseName: "webhook",
+		Collection:   "PayloadTests",
 	}
 
 	session, err := mgo.Dial(db.DatabaseURL)

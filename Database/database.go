@@ -25,7 +25,6 @@ func (db *WebhookMongoDB) Init() {
 	}
 	defer session.Close()
 
-
 }
 
 /*
@@ -38,10 +37,10 @@ func (db *WebhookMongoDB) Add(p types.Subscriber) (string, bool) {
 	}
 	defer session.Close()
 
-	var id types.Id
+	p.ID = bson.NewObjectId()
 	err = session.DB(db.DatabaseName).C(db.Collection).Insert(p)
-	session.DB(db.DatabaseName).C(db.Collection).Find(bson.M{"webhookurl": p.WebhookURL}).One(&id)
-	l := id.ID.Hex()
+
+	l := p.ID.Hex()
 
 	if err != nil {
 		fmt.Printf("error in Insert(), %v", err.Error())

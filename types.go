@@ -10,12 +10,12 @@ type WebhookMongoDB struct {
 }
 
 type Subscriber struct {
-	//ID              bson.ObjectId `json:"_id, omitempty" bson:"_id"`
-	WebhookURL      string  `json:"webhookurl" bson:"webhookurl"`
-	BaseCurrency    string  `json:"basecurrency" bson:"basecurrency"`
-	TargetCurrency  string  `json:"targetcurrency" bson:"targetcurrency"`
-	MinTriggerValue float32 `json:"mintriggervalue" bson:"mintriggervalue"`
-	MaxTriggerValue float32 `json:"maxtriggervalue" bson:"maxtriggervalue"`
+	ID              bson.ObjectId `json:"-" bson:"_id,omitempty"`
+	WebhookURL      string        `json:"webhookurl"`
+	BaseCurrency    string        `json:"basecurrency"`
+	TargetCurrency  string        `json:"targetcurrency"`
+	MinTriggerValue float32       `json:"mintriggervalue"`
+	MaxTriggerValue float32       `json:"maxtriggervalue" `
 }
 type Id struct {
 	ID bson.ObjectId `bson:"_id"`
