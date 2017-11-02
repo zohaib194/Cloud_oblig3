@@ -1,2 +1,2 @@
-clock: Clock
-web: Web
+clock: clock
+web: web

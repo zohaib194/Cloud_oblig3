@@ -3,18 +3,28 @@ package database
 import (
 	"testing"
 
-	types "github.com/zohaib194/oblig2"
+	types "github.com/zohaib194/oblig2/types"
 	mgo "gopkg.in/mgo.v2"
 )
 
 func setupDB(t *testing.T) *WebhookMongoDB {
+	/*info := &mgo.DialInfo{
+		Addrs:    []string{"localhost:27017"}, //[]string{"ds245805.mlab.com:45805"},
+		Timeout:  60 * time.Second,
+		Database: "webhook",
+		Username: "admin",
+		Password: "admin",
+	}*/
+
 	db := WebhookMongoDB{
+		//	mongodb://admin:admin@ds245805.mlab.com:45805/webhook
 		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "PayloadTests",
 	}
 
 	session, err := mgo.Dial(db.DatabaseURL)
+	//mgo.DialWithInfo(info)
 	defer session.Close()
 	if err != nil {
 		t.Error(err)

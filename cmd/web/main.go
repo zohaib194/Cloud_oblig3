@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	database "github.com/zohaib194/oblig2/Database"
+	database "github.com/zohaib194/oblig2/database"
 	types "github.com/zohaib194/oblig2/types"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -337,8 +337,6 @@ func validateCurrency(c string) bool {
 
 	for i, curr := range cur {
 		if c != curr || "EUR" == c {
-			fmt.Print(i)
-
 			if len(cur)-1 == i {
 				return false
 			}

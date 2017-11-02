@@ -57,7 +57,7 @@ Get the unique id of a given webhook from the storage.
 func (db *WebhookMongoDB) Get(keyID string) (types.Subscriber, bool) {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer session.Close()
 	tempP := types.Subscriber{}
