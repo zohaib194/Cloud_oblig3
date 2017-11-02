@@ -345,13 +345,13 @@ func validateCurrency(c string) bool {
 
 func main() {
 	//os.Chdir("/home/zohaib/Desktop/Go/src/github.com/zohaib194/oblig2/Web")
-	port := os.Getenv("PORT")
-	fmt.Print(port)
+	
+	
 	http.HandleFunc("/root", postReqHandler)
 	http.HandleFunc("/root/", registeredWebhook)
 	http.HandleFunc("/root/latest", retrivingLatest)
 	http.HandleFunc("/root/average", AverageRate)
 	http.HandleFunc("/root/evaluationtrigger", evaluationTrigger)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":"+ os.Getenv("PORT"), nil)
 
 }
