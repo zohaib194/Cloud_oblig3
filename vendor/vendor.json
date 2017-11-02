@@ -1,13 +1,13 @@
 {
 	"comment": "",
-	"ignore": "test",
 	"heroku": {
-	"goVersion": "go1.8",
-	"install":  [
-		"./cmd/Web",
-		"./cmd/Clock"
-	]
+		"goVersion": "go1.8",
+		"install": [
+			"./cmd/Web",
+			"./cmd/Clock"
+		]
 	},
+	"ignore": "test",
 	"package": [
 		{
 			"checksumSHA1": "1D8GzeoFGUs5FZOoyC2DpQg8c5Y=",
