@@ -5,21 +5,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	types "github.com/zohaib194/oblig2/types"
 	database "github.com/zohaib194/oblig2/Database"
+	types "github.com/zohaib194/oblig2/types"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 func postReqHandler(w http.ResponseWriter, r *http.Request) {
 	db := database.WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "WebhookPayload",
 	}
@@ -42,6 +43,7 @@ func postReqHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			ok2 := validateCurrency(p.TargetCurrency)
 			if !ok2 {
+				log.Printf("Invalid currency: %v", p.TargetCurrency)
 				http.Error(w, "Invalid target currency", http.StatusBadRequest)
 			} else {
 				db.Init()
@@ -61,7 +63,7 @@ func postReqHandler(w http.ResponseWriter, r *http.Request) {
 
 func registeredWebhook(w http.ResponseWriter, r *http.Request) {
 	db := database.WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "WebhookPayload",
 	}
@@ -93,9 +95,9 @@ func registeredWebhook(w http.ResponseWriter, r *http.Request) {
 
 func retrivingLatest(w http.ResponseWriter, r *http.Request) {
 	db := database.WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
-		Collection:   "WebhookPayload",
+		Collection:   "FixerPayload",
 	}
 	var l types.Latest
 
@@ -154,7 +156,7 @@ func retrivingLatest(w http.ResponseWriter, r *http.Request) {
 }
 func AverageRate(w http.ResponseWriter, r *http.Request) {
 	db := database.WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "FixerPayload",
 	}
@@ -218,7 +220,7 @@ func AverageRate(w http.ResponseWriter, r *http.Request) {
 
 func evaluationTrigger(w http.ResponseWriter, r *http.Request) {
 	db := database.WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "WebhookPayload",
 	}
@@ -310,7 +312,7 @@ func evaluationTrigger(w http.ResponseWriter, r *http.Request) {
 
 func DropFixerCollection() {
 	db := database.WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "FixerPayload",
 	}
@@ -335,23 +337,26 @@ func validateCurrency(c string) bool {
 	var f types.Fixer
 	err = json.Unmarshal(body, &f)
 
-	for key, _ := range f.Rates {
-		if c != key {
-			return false
-		}
+	if f.Rates[c] == 0 || f.Base == c {
+		return false
+	} else {
+		return true
 	}
-	return true
+
 }
 
 func main() {
 	//os.Chdir("/home/zohaib/Desktop/Go/src/github.com/zohaib194/oblig2/Web")
-	
-	
+
+	port := os.Getenv("PORT")
+	if len(port) == 0 {
+		log.Fatal("Port is not set")
+	}
 	http.HandleFunc("/root", postReqHandler)
 	http.HandleFunc("/root/", registeredWebhook)
 	http.HandleFunc("/root/latest", retrivingLatest)
 	http.HandleFunc("/root/average", AverageRate)
 	http.HandleFunc("/root/evaluationtrigger", evaluationTrigger)
-	http.ListenAndServe(":"+ os.Getenv("PORT"), nil)
+	http.ListenAndServe(":"+port, nil)
 
 }
