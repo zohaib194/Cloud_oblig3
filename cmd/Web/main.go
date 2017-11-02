@@ -330,7 +330,7 @@ func DropFixerCollection() {
 }
 
 func validateCurrency(c string) bool {
-	body, err := ioutil.ReadFile("./currency.json")
+	body, err := ioutil.ReadFile("/cmd/Web/currency.json")
 	if err != nil {
 		fmt.Printf("Error occured! %s", err.Error())
 	}
