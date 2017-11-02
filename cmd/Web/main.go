@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	types "github.com/zohaib194/oblig2"
-	database "github.com/zohaib194/oblig2/Database"
+	//types "github.com/zohaib194/oblig2"
+	//database "github.com/zohaib194/oblig2/Database"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	//"gopkg.in/mgo.v2/bson"
 )
 
 func postReqHandler(w http.ResponseWriter, r *http.Request) {
