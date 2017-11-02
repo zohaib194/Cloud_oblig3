@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -331,28 +330,25 @@ func DropFixerCollection() {
 }
 
 func validateCurrency(c string) bool {
-	abspath, err := filepath.Abs("./currency.json")
-	if err != nil {
-		log.Fatal("abs path not found")
-	}
-	body, err := ioutil.ReadFile(abspath)
-	if err != nil {
-		fmt.Printf("Error occured! %s", err.Error())
-	}
-	var f types.Fixer
-	err = json.Unmarshal(body, &f)
 
-	if f.Rates[c] == 0 || f.Base == c {
-		return false
-	} else {
-		return true
-	}
+	cur := [31]string{"AUD", "BGN", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "HKD", "HRK", "HUF", "IDR", "ILS",
+		"INR", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PLN", "RON", "RUB", "SEK", "SGD", "THB", "TRY", "USD", "ZAR"}
 
+	for i, curr := range cur {
+		if c != curr || "EUR" == c {
+			fmt.Print(i)
+
+			if len(cur)-1 == i {
+				return false
+			}
+		} else {
+			break
+		}
+	}
+	return true
 }
 
 func main() {
-	//os.Chdir("/home/zohaib/Desktop/Go/src/github.com/zohaib194/oblig2/Web")
-
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
 		log.Fatal("Port is not set")
