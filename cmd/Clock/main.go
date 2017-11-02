@@ -28,7 +28,7 @@ and send a notification if current rate trigger min or max value of the payload
 */
 func InvokeWebhook() {
 	db := database.WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "WebhookPayload",
 	}
@@ -164,7 +164,7 @@ func GetFixer(url string) (*types.Fixer, bool) {
 */
 func SaveFixer(f *types.Fixer) bool {
 	db := database.WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "FixerPayload",
 	}

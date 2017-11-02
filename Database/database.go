@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 
 	types "github.com/zohaib194/oblig2/types"
 	mgo "gopkg.in/mgo.v2"
@@ -21,7 +22,7 @@ Init initializes the mongo storage.
 func (db *WebhookMongoDB) Init() {
 	session, err := mgo.Dial(db.DatabaseURL)
 	if err != nil {
-		panic(err)
+		log.Printf("Error! %v", err)
 	}
 	defer session.Close()
 

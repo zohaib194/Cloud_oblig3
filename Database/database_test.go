@@ -9,7 +9,7 @@ import (
 
 func setupDB(t *testing.T) *WebhookMongoDB {
 	db := WebhookMongoDB{
-		DatabaseURL:  "mongodb://<Webhook>:<123456789>@ds241065.mlab.com:41065/webhook",
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "PayloadTests",
 	}
