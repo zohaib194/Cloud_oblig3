@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	types "github.com/zohaib194/oblig2"
+	types "github.com/zohaib194/oblig2/types"
 	database "github.com/zohaib194/oblig2/Database"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
