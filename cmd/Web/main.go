@@ -336,11 +336,11 @@ func validateCurrency(c string) bool {
 	err = json.Unmarshal(body, &f)
 
 	for key, _ := range f.Rates {
-		if c == key {
-			return true
+		if c != key {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func main() {
