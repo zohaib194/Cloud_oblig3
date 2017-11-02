@@ -202,12 +202,13 @@ func AverageRate(w http.ResponseWriter, r *http.Request) {
 	for _, value := range fixer {
 
 		temp := value
-		for k, v := range temp.Rates {
-			if l.TargetCurrency == k {
-				count = append(count, v)
+		if temp.Date != time.Now().AddDate(0, 0, -3).Format("2006-01-02") {
+			for k, v := range temp.Rates {
+				if l.TargetCurrency == k {
+					count = append(count, v)
+				}
 			}
 		}
-
 	}
 
 	for _, value := range count {
