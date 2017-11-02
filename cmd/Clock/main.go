@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	types "github.com/zohaib194/oblig2"
 	database "github.com/zohaib194/oblig2/Database"
+	types "github.com/zohaib194/oblig2/types"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

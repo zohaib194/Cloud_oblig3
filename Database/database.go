@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 
-	types "github.com/zohaib194/oblig2"
+	types "github.com/zohaib194/oblig2/types"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
