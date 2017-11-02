@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -330,7 +331,11 @@ func DropFixerCollection() {
 }
 
 func validateCurrency(c string) bool {
-	body, err := ioutil.ReadFile("/cmd/Web/currency.json")
+	abspath, err := filepath.Abs("./currency.json")
+	if err != nil {
+		log.Fatal("abs path not found")
+	}
+	body, err := ioutil.ReadFile(abspath)
 	if err != nil {
 		fmt.Printf("Error occured! %s", err.Error())
 	}
@@ -352,6 +357,7 @@ func main() {
 	if len(port) == 0 {
 		log.Fatal("Port is not set")
 	}
+
 	http.HandleFunc("/root", postReqHandler)
 	http.HandleFunc("/root/", registeredWebhook)
 	http.HandleFunc("/root/latest", retrivingLatest)
