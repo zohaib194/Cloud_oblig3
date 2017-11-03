@@ -16,8 +16,6 @@ import (
 	types "github.com/zohaib194/oblig2/types"
 )
 
-var id string
-
 func Test_postReqHandler(t *testing.T) {
 	db := database.WebhookMongoDB{
 		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
@@ -27,7 +25,7 @@ func Test_postReqHandler(t *testing.T) {
 
 	count := db.Count()
 	sub := types.Subscriber{
-		WebhookURL:      "https://hooks.slack.com/services/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",
+		WebhookURL:      "https://hooks.slack.com/services/T7E02MPH7/B7N4L3S75/IZpacPzX93B1YcIDSav4irO",
 		BaseCurrency:    "EUR",
 		TargetCurrency:  "NOK",
 		MinTriggerValue: 1.50,
@@ -68,7 +66,7 @@ func Test_postReqHandler(t *testing.T) {
 	}
 
 	// ID recieved in return from response Body
-	id = string(resbody)
+	id := string(resbody)
 
 	// DB check
 	_, ok := db.Get(id)
@@ -89,16 +87,28 @@ func Test_registerWebhook(t *testing.T) {
 		Collection:   "WebhookPayload",
 	}
 
-	// Get the an existing payload from the DB
-	sub, ok := db.Get(id)
-
-	if !ok {
-		t.Error("Error during getting the subscriber")
+	// Get the existing payload of testSub from the DB
+	count := db.Count()
+	////////////////////  adding sub in db for Get and Delete requests TESTS /////////////////////////////////
+	sub := types.Subscriber{
+		WebhookURL:      "https://hooks.slack.com/services/T7E02MPH7/B7N4L3S75/IZpacPzX93B1YcIDSav4irO",
+		BaseCurrency:    "EUR",
+		TargetCurrency:  "NOK",
+		MinTriggerValue: 1.50,
+		MaxTriggerValue: 9.2,
 	}
 
-	url := "/root/" + id
+	// Marshalling the payload
+	content, err := json.Marshal(sub)
+	if err != nil {
+		t.Errorf("Error occured! %v", err.Error())
+	}
+
+	// io.Reader of bytes
+	body := ioutil.NopCloser(bytes.NewBufferString(string(content)))
+
 	// Creating the POST request with payload for testing
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("POST", "/root", body)
 
 	if err != nil {
 		t.Errorf("Error occured! %v", err.Error())
@@ -106,6 +116,34 @@ func Test_registerWebhook(t *testing.T) {
 
 	// Serve as ResponsWriter for testing
 	respRec := httptest.NewRecorder()
+
+	// ServeHTTP calls postReqHandler with respRec as ResponsWriter and req as Request
+	http.HandlerFunc(postReqHandler).ServeHTTP(respRec, req)
+
+	// Check if response status code is 200.
+	if respRec.Code != http.StatusOK {
+		t.Errorf("Status code differs. Expected %d .\n Got %d instead", http.StatusOK, respRec.Code)
+	}
+	// Bytes from response Body
+	resbody, err := ioutil.ReadAll(respRec.Body)
+	if err != nil {
+		t.Errorf("Error occured! %v", err.Error())
+	}
+
+	// ID recieved in return from response Body
+	id := string(resbody)
+
+	////////////////////  GET REQUEST TEST /////////////////////////////////
+	url := "/root/" + id
+	// Creating the POST request with payload for testing
+	req, err = http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		t.Errorf("Error occured! %v", err.Error())
+	}
+
+	// Serve as ResponsWriter for testing
+	respRec = httptest.NewRecorder()
 
 	// ServeHTTP calls postReqHandler with respRec as ResponsWriter and req as Request
 	http.HandlerFunc(registeredWebhook).ServeHTTP(respRec, req)
@@ -133,7 +171,7 @@ func Test_registerWebhook(t *testing.T) {
 	}
 
 	// Test for DELETE method
-	count := db.Count() - 1
+	count = db.Count() - 1
 	req, err = http.NewRequest("DELETE", url, nil)
 
 	if err != nil {
@@ -160,7 +198,7 @@ func Test_retriveLatest(t *testing.T) {
 		"NOK",
 	}
 	var expectedValue float32
-	expectedValue = 9.484
+	expectedValue = 9.4838
 
 	// Marshalling the payload
 	content, err := json.Marshal(l)
@@ -215,7 +253,7 @@ func Test_averageRate(t *testing.T) {
 		TargetCurrency: "NOK",
 	}
 	var expectedValue float32
-	expectedValue = 6.3226666
+	expectedValue = 9.483867
 
 	// Marshalling the payload
 	content, err := json.Marshal(l)
@@ -235,7 +273,7 @@ func Test_averageRate(t *testing.T) {
 
 	// Serve as ResponsWriter for testing
 	respRec := httptest.NewRecorder()
-
+	mock = true
 	// ServeHTTP calls postReqHandler with respRec as ResponsWriter and req as Request
 	http.HandlerFunc(AverageRate).ServeHTTP(respRec, req)
 

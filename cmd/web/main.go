@@ -13,10 +13,13 @@ import (
 	"time"
 
 	database "github.com/zohaib194/oblig2/database"
+	fix "github.com/zohaib194/oblig2/fixer"
 	types "github.com/zohaib194/oblig2/types"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
+
+var mock bool
 
 func postReqHandler(w http.ResponseWriter, r *http.Request) {
 	db := database.WebhookMongoDB{
@@ -131,17 +134,16 @@ func retrivingLatest(w http.ResponseWriter, r *http.Request) {
 
 	} else if dbErr != nil && dbErr.Error() == "not found" {
 
-		err2 := session.DB(db.DatabaseName).C(db.Collection).Find(bson.M{"date": time.Now().Format("2006-01-02")}).One(&fixer)
-
-		if err2 != nil {
-			http.Error(w, err2.Error(), http.StatusInternalServerError)
+		fixer, ok := fix.GetFixer("http://api.fixer.io/latest?base=EUR")
+		if !ok {
+			http.Error(w, "Error during retreiving data from Fixer", http.StatusInternalServerError)
 		}
-
 		for key, value := range fixer.Rates {
 			if key == l.TargetCurrency {
 				fmt.Fprint(w, value)
 			}
 		}
+
 	} else {
 
 		for key, value := range fixer.Rates {
@@ -160,63 +162,147 @@ func AverageRate(w http.ResponseWriter, r *http.Request) {
 		DatabaseName: "webhook",
 		Collection:   "FixerPayload",
 	}
+	if mock == true {
+		//Connection to the database
+		session, err := mgo.Dial(db.DatabaseURL)
+		if err != nil {
+			panic(err)
+		}
+		defer session.Close()
+		var fixer *types.Fixer
 
-	var fixer []types.Fixer
-	session, err := mgo.Dial(db.DatabaseURL)
-	if err != nil {
-		panic(err)
-	}
-	defer session.Close()
+		for sd := time.Now().AddDate(0, 0, -3); sd.Unix() <= time.Now().Unix(); sd = sd.AddDate(0, 0, 1) {
 
-	// Remove all fixer payloads from the database
-	err = session.DB(db.DatabaseName).C(db.Collection).Find(nil).All(&fixer)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+			URL := "http://api.fixer.io/" + sd.Format("2006-01-02")
+			res, err := http.Get(URL)
+			if err != nil {
+				panic(err) //TODO
+			}
 
-	// Read request body
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-	defer r.Body.Close()
-	var l types.Latest
+			body, err := ioutil.ReadAll(res.Body)
+			res.Body.Close()
+			if err != nil {
+				panic(err)
+			}
 
-	err = json.Unmarshal(body, &l)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-	if len(l.BaseCurrency) != 3 && len(l.TargetCurrency) != 3 {
-		http.Error(w, "length must be 3", http.StatusBadRequest)
-	}
-	if !strings.Contains(l.BaseCurrency, "EUR") {
-		http.Error(w, "not implemented", http.StatusNotImplemented)
-	}
-	ok := validateCurrency(l.TargetCurrency)
-	if !ok {
-		http.Error(w, "Target currency is not implemented", http.StatusNotImplemented)
-	}
-	var count []float32
-	var averageValue float32
+			err = json.Unmarshal(body, &fixer)
+			if err != nil {
+				panic(err)
+			}
+			//fmt.Print(fixer)
+			fixer.Date = sd.Format("2006-01-02")
+			ok := fix.SaveFixer(fixer)
+			if !ok {
+				fmt.Print("Error occured during saving the data in database")
+			}
+		}
+		var Allfixer []types.Fixer
+		err = session.DB(db.DatabaseName).C(db.Collection).Find(nil).All(&Allfixer)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 
-	for _, value := range fixer {
+		// Read request body
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		defer r.Body.Close()
+		var l types.Latest
 
-		temp := value
-		if temp.Date != time.Now().AddDate(0, 0, -3).Format("2006-01-02") {
-			for k, v := range temp.Rates {
-				if l.TargetCurrency == k {
-					count = append(count, v)
+		err = json.Unmarshal(body, &l)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		if len(l.BaseCurrency) != 3 && len(l.TargetCurrency) != 3 {
+			http.Error(w, "length must be 3", http.StatusBadRequest)
+		}
+		if !strings.Contains(l.BaseCurrency, "EUR") {
+			http.Error(w, "not implemented", http.StatusNotImplemented)
+		}
+		ok := validateCurrency(l.TargetCurrency)
+		if !ok {
+			http.Error(w, "Target currency is not implemented", http.StatusNotImplemented)
+		}
+		var count []float32
+		var averageValue float32
+
+		for key, value := range Allfixer {
+
+			temp := value
+			if key < 3 {
+				if temp.Date != time.Now().AddDate(0, 0, -key).Format("2006-01-02") {
+					for k, v := range temp.Rates {
+						if l.TargetCurrency == k {
+							count = append(count, v)
+						}
+					}
 				}
 			}
 		}
-	}
 
-	for _, value := range count {
-		averageValue = averageValue + value
-	}
-	averageValue = averageValue / 3
-	fmt.Fprint(w, averageValue)
+		for _, value := range count {
+			averageValue = averageValue + value
+		}
+		averageValue = averageValue / 3
+		fmt.Fprint(w, averageValue)
+	} else {
+		var fixer []types.Fixer
+		session, err := mgo.Dial(db.DatabaseURL)
+		if err != nil {
+			panic(err)
+		}
+		defer session.Close()
 
+		// Remove all fixer payloads from the database
+		err = session.DB(db.DatabaseName).C(db.Collection).Find(nil).All(&fixer)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		// Read request body
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		defer r.Body.Close()
+		var l types.Latest
+
+		err = json.Unmarshal(body, &l)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		if len(l.BaseCurrency) != 3 && len(l.TargetCurrency) != 3 {
+			http.Error(w, "length must be 3", http.StatusBadRequest)
+		}
+		if !strings.Contains(l.BaseCurrency, "EUR") {
+			http.Error(w, "not implemented", http.StatusNotImplemented)
+		}
+		ok := validateCurrency(l.TargetCurrency)
+		if !ok {
+			http.Error(w, "Target currency is not implemented", http.StatusNotImplemented)
+		}
+		var count []float32
+		var averageValue float32
+
+		for _, value := range fixer {
+
+			temp := value
+			if temp.Date != time.Now().AddDate(0, 0, -3).Format("2006-01-02") {
+				for k, v := range temp.Rates {
+					if l.TargetCurrency == k {
+						count = append(count, v)
+					}
+				}
+			}
+		}
+
+		for _, value := range count {
+			averageValue = averageValue + value
+		}
+		averageValue = averageValue / 3
+		fmt.Fprint(w, averageValue)
+	}
 }
 
 func evaluationTrigger(w http.ResponseWriter, r *http.Request) {
