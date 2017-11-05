@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -72,26 +71,29 @@ func registeredWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := strings.Split(r.URL.Path, "/")
+	if len(id[2]) != 24 {
+		http.Error(w, "The id is incorrect", http.StatusBadRequest)
+	} else {
+		switch r.Method {
+		case "GET":
+			db.Init()
+			p, ok := db.Get(id[2])
 
-	switch r.Method {
-	case "GET":
-		db.Init()
-		p, ok := db.Get(id[2])
+			if !ok {
+				http.Error(w, "The id is incorrect", http.StatusBadRequest)
+			}
+			bytes, err := json.Marshal(p)
+			if err != nil {
+				http.Error(w, "Error during marshaling", http.StatusInternalServerError)
+			}
+			fmt.Fprint(w, string(bytes))
 
-		if !ok {
-			http.Error(w, "The id is incorrect", http.StatusBadRequest)
-		}
-		bytes, err := json.Marshal(p)
-		if err != nil {
-			http.Error(w, "Error during marshaling", http.StatusInternalServerError)
-		}
-		fmt.Fprint(w, string(bytes))
-
-	case "DELETE":
-		db.Init()
-		ok := db.Delete(id[2])
-		if !ok {
-			http.Error(w, "The id is incorrect", http.StatusBadRequest)
+		case "DELETE":
+			db.Init()
+			ok := db.Delete(id[2])
+			if !ok {
+				http.Error(w, "The id is incorrect", http.StatusBadRequest)
+			}
 		}
 	}
 }
@@ -134,8 +136,9 @@ func retrivingLatest(w http.ResponseWriter, r *http.Request) {
 
 	} else if dbErr != nil && dbErr.Error() == "not found" {
 
-		fixer, ok := fix.GetFixer("http://api.fixer.io/latest?base=EUR")
-		if !ok {
+		fix.LatestFixer()
+		dbErr = session.DB(db.DatabaseName).C(db.Collection).Find(bson.M{"date": time.Now().Format("2006-01-02")}).One(&fixer)
+		if dbErr != nil {
 			http.Error(w, "Error during retreiving data from Fixer", http.StatusInternalServerError)
 		}
 		for key, value := range fixer.Rates {
@@ -227,18 +230,17 @@ func AverageRate(w http.ResponseWriter, r *http.Request) {
 		var count []float32
 		var averageValue float32
 
-		for key, value := range Allfixer {
+		for _, value := range Allfixer {
 
 			temp := value
-			if key < 3 {
-				if temp.Date != time.Now().AddDate(0, 0, -key).Format("2006-01-02") {
-					for k, v := range temp.Rates {
-						if l.TargetCurrency == k {
-							count = append(count, v)
-						}
+			if temp.Date >= time.Now().AddDate(0, 0, -3).Format("2006-01-02") {
+				for k, v := range temp.Rates {
+					if l.TargetCurrency == k {
+						count = append(count, v)
 					}
 				}
 			}
+
 		}
 
 		for _, value := range count {
@@ -288,7 +290,7 @@ func AverageRate(w http.ResponseWriter, r *http.Request) {
 		for _, value := range fixer {
 
 			temp := value
-			if temp.Date != time.Now().AddDate(0, 0, -3).Format("2006-01-02") {
+			if temp.Date >= time.Now().AddDate(0, 0, -3).Format("2006-01-02") {
 				for k, v := range temp.Rates {
 					if l.TargetCurrency == k {
 						count = append(count, v)
@@ -434,16 +436,17 @@ func validateCurrency(c string) bool {
 }
 
 func main() {
-	port := os.Getenv("PORT")
-	if len(port) == 0 {
+	//port := os.Getenv("PORT")
+	/*if len(port) == 0 {
 		log.Fatal("Port is not set")
 	}
+	*/
 
 	http.HandleFunc("/root", postReqHandler)
 	http.HandleFunc("/root/", registeredWebhook)
 	http.HandleFunc("/root/latest", retrivingLatest)
 	http.HandleFunc("/root/average", AverageRate)
 	http.HandleFunc("/root/evaluationtrigger", evaluationTrigger)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":8080" /*+port*/, nil)
 
 }

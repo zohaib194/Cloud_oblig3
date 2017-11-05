@@ -11,9 +11,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	database "github.com/zohaib194/oblig2/database"
 	types "github.com/zohaib194/oblig2/types"
+	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func Test_postReqHandler(t *testing.T) {
@@ -192,13 +195,24 @@ func Test_registerWebhook(t *testing.T) {
 }
 
 func Test_retriveLatest(t *testing.T) {
+	db := database.WebhookMongoDB{
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
+		DatabaseName: "webhook",
+		Collection:   "FixerPayload",
+	}
 
 	l := types.Latest{
 		"EUR",
 		"NOK",
 	}
+	// start session to get value expected
+	session, err := mgo.Dial(db.DatabaseURL)
+	defer session.Close()
+	if err != nil {
+		t.Error(err)
+	}
+
 	var expectedValue float32
-	expectedValue = 9.4838
 
 	// Marshalling the payload
 	content, err := json.Marshal(l)
@@ -240,6 +254,19 @@ func Test_retriveLatest(t *testing.T) {
 		t.Errorf("Error during unmarshalling %v", err.Error())
 	}
 
+	///////////////////////////////////
+	var expected types.Fixer
+	err = session.DB(db.DatabaseName).C(db.Collection).Find(bson.M{"date": time.Now().Format("2006-01-02")}).One(&expected)
+
+	if err != nil {
+		t.Errorf("err during getting date %v", err.Error())
+	}
+	for key, value := range expected.Rates {
+		if l.TargetCurrency == key {
+			expectedValue = value
+		}
+	}
+
 	// Check if result value is as expected
 	if result != expectedValue {
 		t.Errorf("Expected %g, Got %g", expectedValue, result)
@@ -248,12 +275,22 @@ func Test_retriveLatest(t *testing.T) {
 }
 
 func Test_averageRate(t *testing.T) {
+	db := database.WebhookMongoDB{
+		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
+		DatabaseName: "webhook",
+		Collection:   "FixerPayload",
+	}
 	l := types.Latest{
 		BaseCurrency:   "EUR",
 		TargetCurrency: "NOK",
 	}
-	var expectedValue float32
-	expectedValue = 9.483867
+
+	// start session to get value expected
+	session, err := mgo.Dial(db.DatabaseURL)
+	defer session.Close()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// Marshalling the payload
 	content, err := json.Marshal(l)
@@ -295,8 +332,36 @@ func Test_averageRate(t *testing.T) {
 		t.Errorf("Error during unmarshalling %v", err.Error())
 	}
 
+	/////////////////
+	var fixers []types.Fixer
+
+	err = session.DB(db.DatabaseName).C(db.Collection).Find(nil).All(&fixers)
+
+	if err != nil {
+		t.Errorf("err during getting date %v", err.Error())
+	}
+
+	var count []float32
+	var averageValue float32
+
+	for _, value := range fixers {
+		temp := value
+		if temp.Date >= time.Now().AddDate(0, 0, -3).Format("2006-01-02") {
+			for k, v := range temp.Rates {
+				if l.TargetCurrency == k {
+					count = append(count, v)
+				}
+			}
+		}
+	}
+
+	for _, value := range count {
+		averageValue = averageValue + value
+	}
+	averageValue = averageValue / 3
+
 	// Check if result value is as expected
-	if result != expectedValue {
-		t.Errorf("Expected %g, Got %g", expectedValue, result)
+	if result != averageValue {
+		t.Errorf("Expected %g, Got %g", averageValue, result)
 	}
 }

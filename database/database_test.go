@@ -8,16 +8,8 @@ import (
 )
 
 func setupDB(t *testing.T) *WebhookMongoDB {
-	/*info := &mgo.DialInfo{
-		Addrs:    []string{"localhost:27017"}, //[]string{"ds245805.mlab.com:45805"},
-		Timeout:  60 * time.Second,
-		Database: "webhook",
-		Username: "admin",
-		Password: "admin",
-	}*/
 
 	db := WebhookMongoDB{
-		//	mongodb://admin:admin@ds245805.mlab.com:45805/webhook
 		DatabaseURL:  "mongodb://admin:admin@ds245805.mlab.com:45805/webhook",
 		DatabaseName: "webhook",
 		Collection:   "PayloadTests",
