@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -436,17 +437,16 @@ func validateCurrency(c string) bool {
 }
 
 func main() {
-	//port := os.Getenv("PORT")
-	/*if len(port) == 0 {
+	port := os.Getenv("PORT")
+	if len(port) == 0 {
 		log.Fatal("Port is not set")
 	}
-	*/
 
 	http.HandleFunc("/root", postReqHandler)
 	http.HandleFunc("/root/", registeredWebhook)
 	http.HandleFunc("/root/latest", retrivingLatest)
 	http.HandleFunc("/root/average", AverageRate)
 	http.HandleFunc("/root/evaluationtrigger", evaluationTrigger)
-	http.ListenAndServe(":8080" /*+port*/, nil)
+	http.ListenAndServe(":8080"+port, nil)
 
 }
