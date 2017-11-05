@@ -447,6 +447,6 @@ func main() {
 	http.HandleFunc("/root/latest", retrivingLatest)
 	http.HandleFunc("/root/average", AverageRate)
 	http.HandleFunc("/root/evaluationtrigger", evaluationTrigger)
-	http.ListenAndServe(":8080"+port, nil)
+	http.ListenAndServe(":"+port, nil)
 
 }
